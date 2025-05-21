@@ -1,0 +1,16 @@
+# Java (Spring Boot)
+backend/target/
+*.log
+*.iml
+
+# Node (React)
+frontend/node_modules/
+frontend/build/
+fronted/.env
+
+# IDE
+.idea/
+*.iml
+
+# System
+.DS_Store
