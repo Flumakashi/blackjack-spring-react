@@ -1,42 +1,43 @@
 package com.example.backend.service;
 
+import com.example.backend.dto.UserRegisterRequest;
+import com.example.backend.model.Role;
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
     @Transactional
-    public User registerUser (String username, String email, String password) throws Exception {
-        if (userRepository.existsByUsername(username)) {
-            throw new Exception("Username is already taken");
+    public void registerUser (UserRegisterRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username is already taken");
         }
-        if (userRepository.existsByEmail(email)) {
-            throw new Exception("Email is already in use");
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email is already in use");
         }
 
-        User user = new User ();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        return userRepository.save(user);
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.USER)
+                .build();
+
+        userRepository.save(user);
+
     }
 
-    public User findByUsername(String username) throws Exception {
-        return userRepository.findByUsername(username)
+    public User findByUsername(String email) throws Exception {
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new Exception("User not found"));
     }
 }
