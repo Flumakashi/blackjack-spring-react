@@ -18,7 +18,7 @@ public class UserController {
     private final UserRepository userRepository;
 
 //    @GetMapping("/me")
-//    public User getCurrentUser() {@AuthenticationPrincipal UserDetails userDetails) {
+//    public User getCurrentUser (@AuthenticationPrincipal UserDetails userDetails) {
 //        return userRepository.findByEmail(userDetails.getUsername())
 //                .orElseThrow(() -> new RuntimeException("User not found"));
 //    }
