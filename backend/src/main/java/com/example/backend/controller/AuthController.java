@@ -4,7 +4,6 @@ package com.example.backend.controller;
 import com.example.backend.dto.AuthResponse;
 import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.UserRegisterRequest;
-import com.example.backend.repository.UserRepository;
 import com.example.backend.security.JwtUtils;
 import com.example.backend.service.UserService;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,8 @@
 package com.example.backend.service;
 
 
+import com.example.backend.exception.UserNotFoundException;
+import com.example.backend.model.Card;
 import com.example.backend.model.Game;
 import com.example.backend.model.GameStatus;
 import com.example.backend.model.User;
@@ -23,29 +25,24 @@ public class GameService {
 
     public Game startNewGame(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        List<String> deck = generateShuffledDeck();
+        List<Card> deck = generateShuffledDeck();
 
-        List<String> playerCards = new ArrayList<>();
-        playerCards.add(deck.remove(0));
-        playerCards.add(deck.remove(0));
+        List<Card> playerCards = new ArrayList<>(List.of(deck.removeFirst(),deck.removeFirst()));
+        List<Card> dealerCards = new ArrayList<>(List.of(deck.removeFirst(),deck.removeFirst()));
 
-        List<String> dealerCards = new ArrayList<>();
-        dealerCards.add(deck.remove(0));
-        dealerCards.add(deck.remove(0));
 
         int playerScore = calculateScore(playerCards);
-        int dealerScore = calculateScore(dealerCards);
+//        int dealerScoreHidden = calculateScore(List.of(dealerCards.getFirst()));
 
         Game game = Game.builder()
                 .player(user)
                 .playerCards(playerCards)
-                .dealerCards(List.of(dealerCards.get(0))) // скрываем 1 карту
+                .dealerCards(List.of(dealerCards.getFirst())) // вторая карта скрыта
                 .playerScore(playerScore)
                 .dealerScore(0)
                 .status(GameStatus.PLAYER_TURN)
-                .createdAt(LocalDateTime.now())
                 .build();
 
         return gameRepository.save(game);
@@ -53,25 +50,28 @@ public class GameService {
 
     // TODO: методы hit(), stand(), getGameById()
 
-    private List<String> generateShuffledDeck() {
-        List<String> deck = new ArrayList<>();
+    private List<Card> generateShuffledDeck() {
+        List<Card> deck = new ArrayList<>();
         String[] suits = {"♠", "♥", "♦", "♣"};
         String[] ranks = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 
         for(String suit : suits) {
             for(String rank : ranks) {
-                deck.add(rank + suit);
+                deck.add(Card.builder()
+                        .rank(rank)
+                        .suit(suit)
+                        .build());
             }
         }
         Collections.shuffle(deck);
         return deck;
     }
 
-    private int calculateScore(List<String> cards) {
+    private int calculateScore(List<Card> cards) {
         int score = 0;
         int aceCount = 0;
-        for (String card : cards) {
-            String rank = card.replaceAll("[^0-9JQKA]", "");
+        for (Card card : cards) {
+            String rank = card.getRank();
 
             if("JQK".contains(rank)) {
                 score += 10;

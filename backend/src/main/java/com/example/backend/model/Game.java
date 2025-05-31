@@ -30,18 +30,24 @@ public class Game {
 
     @ElementCollection
     @CollectionTable(name = "player_cards", joinColumns = @JoinColumn(name = "game_id"))
-    @Column(name = "card")
-    private List<String> playerCards;
+    private List<Card> playerCards;
 
     @ElementCollection
     @CollectionTable(name = "dealer_cards", joinColumns = @JoinColumn(name = "game_id"))
-    @Column(name = "card")
-    private List<String> dealerCards;
+    private List<Card> dealerCards;
 
+    @Column
     private LocalDateTime createdAt;
+
+    @Column
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

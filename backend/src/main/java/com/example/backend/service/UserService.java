@@ -1,11 +1,15 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.UserRegisterRequest;
+import com.example.backend.dto.UserResponse;
+import com.example.backend.exception.UserAlreadyExistsException;
+import com.example.backend.exception.UserNotFoundException;
 import com.example.backend.model.Role;
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,12 +21,12 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public void registerUser (UserRegisterRequest request) {
+    public UserResponse registerUser (UserRegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username is already taken");
+            throw new UserAlreadyExistsException("Username is already taken");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already in use");
+            throw new UserAlreadyExistsException("Email is already in use");
         }
 
         User user = User.builder()
@@ -34,10 +38,16 @@ public class UserService {
 
         userRepository.save(user);
 
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole());
     }
 
-    public User findByUsername(String email) throws Exception {
+    @Transactional()
+    public User findByEmail(String email) throws Exception {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new Exception("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
     }
 }
