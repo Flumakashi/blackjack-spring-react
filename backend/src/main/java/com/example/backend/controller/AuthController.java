@@ -4,6 +4,7 @@ package com.example.backend.controller;
 import com.example.backend.dto.AuthResponse;
 import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.UserRegisterRequest;
+import com.example.backend.dto.UserResponse;
 import com.example.backend.security.JwtUtils;
 import com.example.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +25,9 @@ public class AuthController {
     private final JwtUtils jwtUtils;
 
    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserRegisterRequest request) {
-       userService.registerUser(request);
-       return ResponseEntity.ok("User registered successfully");
+   public ResponseEntity<UserResponse> register(@RequestBody UserRegisterRequest request) {
+       UserResponse userResponse = userService.registerUser(request);
+       return ResponseEntity.ok(userResponse);
    }
 
    @PostMapping("/login")
@@ -35,11 +36,9 @@ public class AuthController {
                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
        );
 
-       UserDetails user = (UserDetails) authentication.getPrincipal();
-       String token = jwtUtils.generateToken(user.getUsername());
+       UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+       String token = jwtUtils.generateToken(userDetails.getUsername()); // getUsername == getEmail
 
        return ResponseEntity.ok(new AuthResponse(token));
    }
-
-
 }

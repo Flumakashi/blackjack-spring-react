@@ -1,7 +1,7 @@
 package com.example.backend.controller;
 
 
-import com.example.backend.model.Game;
+import com.example.backend.dto.GameResponse;
 import com.example.backend.security.JwtUtils;
 import com.example.backend.service.GameService;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +20,20 @@ public class GameController {
     private final JwtUtils jwtUtils;
 
     @PostMapping("/start")
-    public ResponseEntity<Game> startGame(@RequestHeader("Authorization") String token) {
-        String email = jwtUtils.extractEmail(token.replace("Bearer", ""));
-        Game game = gameService.startNewGame(email);
+    public ResponseEntity<GameResponse> startGame(@RequestHeader("Authorization") String authHeader) {
+        String token = extractToken(authHeader);
+        String email = jwtUtils.extractEmail(token);
+        GameResponse game = gameService.startNewGame(email);
         return ResponseEntity.ok(game);
     }
+
+    private String extractToken(String header) {
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        throw new RuntimeException("Invalid Authorization header");
+    }
+
 
     // TODO: методы /hit, /stand, /status/{id}
 }

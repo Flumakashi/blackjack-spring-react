@@ -50,4 +50,5 @@ public class Game {
     @PreUpdate void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
 }

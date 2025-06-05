@@ -1,25 +1,44 @@
 package com.example.backend.controller;
 
 
-import com.example.backend.model.User;
-import com.example.backend.repository.UserRepository;
+import com.example.backend.dto.UserResponse;
+import com.example.backend.dto.UserUpdateRequest;
+import com.example.backend.security.JwtUtils;
+import com.example.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final JwtUtils jwtUtils;
+    private final UserService userService;
 
-//    @GetMapping("/me")
-//    public User getCurrentUser (@AuthenticationPrincipal UserDetails userDetails) {
-//        return userRepository.findByEmail(userDetails.getUsername())
-//                .orElseThrow(() -> new RuntimeException("User not found"));
-//    }
+    @PutMapping("/update")
+    public ResponseEntity<UserResponse> updateUser(@RequestHeader("Authorization") String authHeader,
+                                                   @RequestBody UserUpdateRequest request) {
+        String token = extractToken(authHeader);
+        String email = jwtUtils.extractEmail(token);
+        UserResponse updated = userService.updateUserProfile(email, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+        String token = extractToken(authHeader);
+        String email = jwtUtils.extractEmail(token);
+        UserResponse user = userService.getCurrentUser(email);
+        return ResponseEntity.ok(user);
+    }
+
+    private String extractToken(String header) {
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        throw new RuntimeException("Invalid Authorization header");
+    }
+
 }

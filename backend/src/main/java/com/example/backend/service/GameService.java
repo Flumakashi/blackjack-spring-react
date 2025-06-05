@@ -1,7 +1,9 @@
 package com.example.backend.service;
 
 
+import com.example.backend.dto.GameResponse;
 import com.example.backend.exception.UserNotFoundException;
+import com.example.backend.mapper.GameMapper;
 import com.example.backend.model.Card;
 import com.example.backend.model.Game;
 import com.example.backend.model.GameStatus;
@@ -11,7 +13,6 @@ import com.example.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,8 +23,9 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final UserRepository userRepository;
+    private final GameMapper gameMapper;
 
-    public Game startNewGame(String email) {
+    public GameResponse startNewGame(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -34,7 +36,6 @@ public class GameService {
 
 
         int playerScore = calculateScore(playerCards);
-//        int dealerScoreHidden = calculateScore(List.of(dealerCards.getFirst()));
 
         Game game = Game.builder()
                 .player(user)
@@ -45,7 +46,9 @@ public class GameService {
                 .status(GameStatus.PLAYER_TURN)
                 .build();
 
-        return gameRepository.save(game);
+        gameRepository.save(game);
+
+        return gameMapper.toDto(game);
     }
 
     // TODO: методы hit(), stand(), getGameById()
@@ -90,5 +93,6 @@ public class GameService {
 
         return score;
     }
+
 
 }
