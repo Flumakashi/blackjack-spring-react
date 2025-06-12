@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 
 import com.example.backend.dto.GameResponse;
+import com.example.backend.exception.GameNotFoundException;
 import com.example.backend.exception.UserNotFoundException;
 import com.example.backend.mapper.GameMapper;
 import com.example.backend.model.Card;
@@ -10,8 +11,10 @@ import com.example.backend.model.GameStatus;
 import com.example.backend.model.User;
 import com.example.backend.repository.GameRepository;
 import com.example.backend.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,6 +95,77 @@ public class GameService {
         }
 
         return score;
+    }
+
+    @Transactional
+    public GameResponse hit(Long gameId, String email){
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new GameNotFoundException("Game not found"));
+
+        if(!game.getPlayer().getEmail().equals(email)) {
+            throw new AccessDeniedException("You are not allowed to hit this game");
+        }
+
+        if(game.getStatus() != GameStatus.PLAYER_TURN) {
+            throw new IllegalStateException("You can't hit after your turn is over");
+        }
+
+        List<Card> deck = generateShuffledDeck();
+        Card newCard = deck.removeFirst();
+        game.getPlayerCards().add(newCard);
+
+        int newScore = calculateScore(game.getPlayerCards());
+        game.setPlayerScore(newScore);
+
+        if(newScore > 21){
+            game.setStatus(GameStatus.DEALER_WON);
+        }
+
+        return gameMapper.toDto(gameRepository.save(game));
+    }
+
+    @Transactional
+    public GameResponse stand (Long gameId, String email){
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new GameNotFoundException("Game not found"));
+
+        if(!game.getPlayer().getEmail().equals(email)) {
+            throw new AccessDeniedException("You can't hit this game");
+        }
+
+        if (game.getStatus() != GameStatus.PLAYER_TURN) {
+            throw new IllegalStateException("You can't stand after your turn is over");
+        }
+
+        List<Card> dealerCards = new ArrayList<>(game.getDealerCards());
+
+        List<Card> deck = generateShuffledDeck();
+        dealerCards.remove(deck.removeFirst());
+
+        int dealerScore = calculateScore(dealerCards);
+
+        while(dealerScore > 17){
+            Card newCard = deck.removeFirst();
+            dealerCards.add(newCard);
+            dealerScore = calculateScore(dealerCards);
+        }
+
+        int playerScore = game.getPlayerScore();
+        GameStatus result;
+
+        if (dealerScore > 21 || playerScore > dealerScore) {
+            result = GameStatus.PLAYER_WON;
+        } else if (dealerScore == playerScore) {
+            result = GameStatus.DRAW;
+        } else {
+            result = GameStatus.DEALER_WON;
+        }
+
+        game.setDealerCards(dealerCards);
+        game.setDealerScore(dealerScore);
+        game.setStatus(result);
+
+        return gameMapper.toDto(gameRepository.save(game));
     }
 
 
