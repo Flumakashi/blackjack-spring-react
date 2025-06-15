@@ -37,13 +37,12 @@ public class GameService {
         List<Card> playerCards = new ArrayList<>(List.of(deck.removeFirst(),deck.removeFirst()));
         List<Card> dealerCards = new ArrayList<>(List.of(deck.removeFirst(),deck.removeFirst()));
 
-
         int playerScore = calculateScore(playerCards);
 
         Game game = Game.builder()
                 .player(user)
                 .playerCards(playerCards)
-                .dealerCards(List.of(dealerCards.getFirst())) // вторая карта скрыта
+                .dealerCards(dealerCards)
                 .playerScore(playerScore)
                 .dealerScore(0)
                 .status(GameStatus.PLAYER_TURN)
@@ -53,8 +52,6 @@ public class GameService {
 
         return gameMapper.toDto(game);
     }
-
-    // TODO: методы hit(), stand(), getGameById()
 
     private List<Card> generateShuffledDeck() {
         List<Card> deck = new ArrayList<>();
@@ -138,13 +135,11 @@ public class GameService {
         }
 
         List<Card> dealerCards = new ArrayList<>(game.getDealerCards());
-
         List<Card> deck = generateShuffledDeck();
-        dealerCards.remove(deck.removeFirst());
 
         int dealerScore = calculateScore(dealerCards);
 
-        while(dealerScore > 17){
+        while(dealerScore < 17){
             Card newCard = deck.removeFirst();
             dealerCards.add(newCard);
             dealerScore = calculateScore(dealerCards);
@@ -167,6 +162,4 @@ public class GameService {
 
         return gameMapper.toDto(gameRepository.save(game));
     }
-
-
 }

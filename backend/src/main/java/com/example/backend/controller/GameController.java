@@ -3,7 +3,6 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.GameResponse;
 import com.example.backend.mapper.GameMapper;
-import com.example.backend.model.Game;
 import com.example.backend.security.JwtUtils;
 import com.example.backend.service.GameService;
 import lombok.RequiredArgsConstructor;
